@@ -1,26 +1,42 @@
 #include<iostream>
 #include<algorithm>
 #include <vector>
+#include <chrono>
 using namespace std;
+using namespace std::chrono;
+
 
 void print(vector<int> arr, int size);
 void mergeSort(vector<int>& arr, int l, int r);
 void merge(vector<int>& arr, int p, int q, int r);
 
 int main() {
-   int n;
-   cout << "Enter the number of elements: ";
-   cin >> n;
-   vector<int> arr(n +1);
-   cout << "Enter elements separated by spaces:" << endl;
-   for(int i = 1; i<=n; i++) {
-      cin >> arr[i];
-   }
-   cout << "Before Sorting: ";
-   print(arr, n);
-   mergeSort(arr, 0, n - 1);
-   cout << "After Sorting: ";
-   print(arr, n);
+    int n;
+    cout << "Enter the number of elements: ";
+    cin >> n;
+    vector<int> arr(n + 1);
+    cout << "Enter elements separated by spaces:" << endl;
+    for(int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+    cout << "Before Sorting: ";
+    print(arr, n);
+
+    //start clock
+    auto start = steady_clock::now();
+
+    mergeSort(arr, 0, n - 1);
+
+    //stop clock
+    auto stop = steady_clock::now();
+
+    //calculate duration time of function
+    auto duration = duration_cast<nanoseconds>(stop - start);
+
+    cout << "After Sorting: ";
+    print(arr, n);
+
+    cout << "Sort completed in: " << duration.count() << " nanoseconds" << endl;
 }
 
 void merge(vector<int>& arr, int p, int q, int r) {
