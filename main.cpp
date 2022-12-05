@@ -1,91 +1,230 @@
 #include<iostream>
 #include<algorithm>
 #include <vector>
+#include<map>
 #include <chrono>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 using namespace std;
 using namespace std::chrono;
 
 
-void print(vector<int> arr, int size);
-void mergeSort(vector<int>& arr, int l, int r);
-void merge(vector<int>& arr, int p, int q, int r);
-int getMax(vector<int>& arr, int size);
-void countSort(vector<int>& arr, int size);
-void execute(int n, int sort);
+vector<vector<string>> readCSV(string filepath);
+void execute(int n, int sort, vector<vector<string>>& csv);
+void merge(vector<vector<string>> &csv, int sort_index, int p, int q, int r);
+void mergeSort(vector<vector<string>>& csv, int sort_index, int l, int r);
+int getMax(vector<vector<string>>& csv, int sort_index, int size);
+void countSort(vector<vector<string>>& csv, int sort_index, int size);
+void print(vector<vector<string>> csv);
 
 int main() {
 
-    // these numbers will be the index that gets sorted in the 2D array, make sure these line up
-    cout << "Please select what you would like to sort by: " << endl;
-    cout << "[1]: Overall rating" << endl <<
-    "[2]: Work life balance" << endl <<
-    "[3]: Culture values" << endl <<
-    "[4]: Diversity factor" << endl <<
-    "[5]: Career opportunities" << endl <<
-    "[6]: Comp benefits" << endl << 
-    "[7]: Senior Management" << endl;
+    cout << "Reading File... 100,000 lines could take a little bit of time :)" << endl;
+    vector<vector<string>> csv = readCSV("out.csv");
 
-    int n;
-    cin >> n;
-
-    cout << "Before Sorting: ";
-    //print(arr, n); here, call print() on the correct column, maybe don't print all the values, just the first few and the last
-
-    cout << "How would you like to sort? Enter 1 or 2: " << endl;
-    cout << "[1]: Merge Sort" << endl << "[2]: Counting Sort" << endl << "[3]: Let's Compare Both" << endl;
-    int sort;
-    cin >> sort;
-    execute(n, sort); // TODO: update this function so that the 2D vector is passed in 
+    int n = 0;
     
+    while (n < 1 || n > 7) {
+        // these numbers will be the index that gets sorted in the 2D array, make sure these line up
+        cout << "Please select what you would like to sort by: " << endl;
+        cout << "[1]: Overall Rating" << endl <<
+            "[2]: Work Life Balance" << endl <<
+            "[3]: Culture Values" << endl <<
+            "[4]: Diversity Factor" << endl <<
+            "[5]: Career Opportunities" << endl <<
+            "[6]: Comp Benefits" << endl <<
+            "[7]: Senior Management" << endl;
 
-    cout << "After Sorting: ";
-    //print(arr, n); same as above: call print() on correct column, do not print all values 
+        cin >> n;
+    }
+    map<int, string> columns{ {1, "Overall Rating"}, {2, "Work Life Balance"}, {3, "Culture Values"}, {4, "Diversity Factor"}, {5, "Career Opportunities"}, {6, "Comp Benefits"}, {7, "Senior Management"}};
 
+    n += 3;
+
+    cout << "\n\n";
+
+    cout << "\nBefore Sorting by " << columns[n - 3] << "(Column #" << n + 1 << "): \n" << endl;
+
+    print(csv);
+
+    // print(arr, n); here, call print() on the correct column, maybe don't print all the values, just the first few and the last
+
+    int sort = 0;
+    while (sort < 1 || sort > 3) {
+        cout << "How would you like to sort? Enter 1 or 2: " << endl;
+        cout << "[1]: Merge Sort" << endl << "[2]: Counting Sort" << endl << "[3]: Let's Compare Both" << endl;
+        cin >> sort;
+    }
+    
+    cout << "\n\n\n\n\n\n\n\n";
+    execute(n, sort, csv); // TODO: update this function so that the 2D vector is passed in 
+    
+    cout << "\nAfter Sorting by " << columns[n - 3] << " (Column #" << n + 1 << "):" << endl;
+    print(csv);
+    
     return 0;
 }
 
-void execute(int n, int sort){
-    if(sort == 1){ // 
-        auto start = steady_clock::now();
-        // call merge sort on index n of the main vector 
-        auto stop = steady_clock::now();
-        auto duration = duration_cast<nanoseconds>(stop - start);
-        cout << "Sort completed in: " << duration.count() << " nanoseconds" << endl;
-    }else if(sort == 2){
-        auto start2 = steady_clock::now();
-        // call counting sort on index n of the main vector
-        auto stop2 = steady_clock::now();
-        auto duration2 = duration_cast<nanoseconds>(stop2 - start2);
-        cout << "Sort completed in: " << duration2.count() << " nanoseconds" << endl;
-    }else if (sort == 3){
-        auto start3 = steady_clock::now();
-        // call merge sort and get time 
-        auto stop3 = steady_clock::now();
-        auto durationMerge = duration_cast<nanoseconds>(stop3 - start3);
-        cout << "Sort completed in: " << durationMerge.count() << " nanoseconds" << endl;
+vector<vector<string>> readCSV(string filepath) {
 
-        start3 = steady_clock::now();
-        // call merge sort and get time 
-        stop3 = steady_clock::now();
-        auto durationCount = duration_cast<nanoseconds>(stop3 - start3);
-        cout << "Sort completed in: " << durationCount.count() << " nanoseconds" << endl;
+    vector<vector<string>> csv;
+    vector<string> row;
+    string line, cell;
+
+    fstream file(filepath, ios::in);
+    if (file.is_open())
+    {
+        while (getline(file, line))
+        {
+            row.clear();
+
+            stringstream str(line);
+            
+            bool ignore_first = true;
+            while (getline(str, cell, ',')) {
+                if (ignore_first) {
+                    ignore_first = false;
+                    continue;
+                }
+                else {
+                    row.push_back(cell);
+                }
+            }
+                
+            csv.push_back(row);
+        }
+    }
+    else {
+        cout << "Could not open the file\n";
+    }
+
+    return csv;
+
+}
+
+string AddCommas(int time)
+{
+    stringstream ss;
+    ss.imbue(locale(""));
+    ss << fixed << time;
+    return ss.str();
+}
+
+void execute(int n, int sort, vector<vector<string>> &csv) {
+
+    if (sort == 1) { // 
+        
+
+        vector<vector<string>> mergesort_csv = csv;
+
+        // remove line defining column titles
+        mergesort_csv.erase(mergesort_csv.begin());
+        
+        cout << "Performing Merge Sort..." << endl;
+
+        // timer start
+        auto start = steady_clock::now();
+
+        // execute merge sort
+        mergeSort(mergesort_csv, n, 0, mergesort_csv.size() - 1);
+
+        // timer stop
+        auto stop = steady_clock::now();
+
+        // report total time taken for sort
+        auto duration = duration_cast<nanoseconds>(stop - start);
+        cout << "\n Merge Sort completed in: " << AddCommas(duration.count()) << " nanoseconds" << endl;
+
+        mergesort_csv.insert(mergesort_csv.begin(), csv[0]);
+        csv = mergesort_csv;
+
+    }
+    else if (sort == 2) {
+        auto start2 = steady_clock::now();
+
+        vector<vector<string>> countsort_csv = csv;
+
+        // remove line defining column titles
+        countsort_csv.erase(countsort_csv.begin());
+
+        cout << "Performing Count Sort..." << endl;
+
+        // timer start
+        auto start = steady_clock::now();
+
+        countSort(countsort_csv, n, countsort_csv.size());
+
+        // timer stop
+        auto stop2 = steady_clock::now();
+        
+        // report total time taken for sort
+        auto duration2 = duration_cast<nanoseconds>(stop2 - start2);
+        cout << "Count Sort completed in: " << AddCommas(duration2.count()) << " nanoseconds" << endl;
+
+        countsort_csv.insert(countsort_csv.begin(), csv[0]);
+        csv = countsort_csv;
+    }
+    else if (sort == 3) {
+
+        // Merge sort
+        vector<vector<string>> mergesort_csv = csv;
+
+        // remove line defining column titles
+        mergesort_csv.erase(mergesort_csv.begin());
+
+        cout << "Performing Merge Sort..." << endl;
+
+        auto start3 = steady_clock::now();
+
+        mergeSort(mergesort_csv, n, 0, mergesort_csv.size() - 1);
+
+        auto stop3 = steady_clock::now();
+
+        // report total time taken for sort
+        auto durationMerge = duration_cast<nanoseconds>(stop3 - start3);
+        cout << "Merge Sort completed in: " << AddCommas(durationMerge.count()) << " nanoseconds" << endl;
+
+        cout << endl;
+
+        //Count Sort
+        vector<vector<string>> countsort_csv = csv;
+
+        // remove line defining column titles
+        countsort_csv.erase(countsort_csv.begin());
+
+        cout << "Performing Count Sort..." << endl;
+
+        auto start4 = steady_clock::now();
+
+        countSort(countsort_csv, n, countsort_csv.size());
+        
+        auto stop4 = steady_clock::now();
+
+        // report total time taken for sort
+        auto durationCount = duration_cast<nanoseconds>(stop4 - start4);
+        cout << "Count Sort completed in: " << AddCommas(durationCount.count()) << " nanoseconds" << endl;
+
+        countsort_csv.insert(countsort_csv.begin(), csv[0]);
+        csv = countsort_csv;
     }
 
 }
 
 
-void merge(vector<int>& arr, int p, int q, int r) {
+void merge(vector<vector<string>>& csv, int sort_index, int p, int q, int r) {
+   
     //create two subarrays
     int n1 = q - p + 1;
     int n2 = r - q;
 
-    vector<int> L(n1);
-    vector<int> M(n2);
+    vector<vector<string>> L(n1);
+    vector<vector<string>> M(n2);
 
     for (int i = 0; i < n1; i++)
-        L[i] = arr[p + i];
+        L[i] = csv[p + i];
     for (int j = 0; j < n2; j++)
-        M[j] = arr[q + 1 + j];
+        M[j] = csv[q + 1 + j];
 
     //keep track of index of each subarray and merged array
     int i, j, k;
@@ -95,11 +234,12 @@ void merge(vector<int>& arr, int p, int q, int r) {
 
     //until reach end of either subarray, put smaller element in merged array
     while (i < n1 && j < n2) {
-        if (L[i] <= M[j]) {
-            arr[k] = L[i];
+        if (stoi(L[i][sort_index]) <= stoi(M[j][sort_index])) {
+            csv[k] = L[i];
             i++;
-        } else {
-            arr[k] = M[j];
+        }
+        else {
+            csv[k] = M[j];
             j++;
         }
         k++;
@@ -107,76 +247,114 @@ void merge(vector<int>& arr, int p, int q, int r) {
 
     //if reach the end of either subarray, add all remaining elements to merged array
     while (i < n1) {
-        arr[k] = L[i];
+        csv[k] = L[i];
         i++;
         k++;
     }
 
     while (j < n2) {
-        arr[k] = M[j];
+        csv[k] = M[j];
         j++;
         k++;
     }
 }
 
-void mergeSort(vector<int>& arr, int l, int r) {
+void mergeSort(vector<vector<string>> &csv, int sort_index, int l, int r) {
     //recursively divides array into two subarrays, sorts and merges them
-    if (l < r) {
+    if (l >= r) {
+        return;
+    }
+    else {
         //find midpoint
+
         int m = l + (r - l) / 2;
 
         //sort each subarray
-        mergeSort(arr, l, m);
-        mergeSort(arr, m + 1, r);
+        mergeSort(csv, sort_index, l, m);
+        mergeSort(csv, sort_index, m + 1, r);
 
         //merge the two subarrays
-        merge(arr, l, m, r);
+        merge(csv, sort_index, l, m, r);
     }
 }
 
-void print(vector<int> arr, int size) {
-    //print array
-    for (int i = 0; i < size; i++)
-        cout << arr[i] << " ";
-    cout << endl;
+int getMax(vector<vector<string>>& csv, int sort_index, int size) { // returns max given the 2d vector, sorting criteria, number of rows
+    int max = stoi(csv[0][sort_index]);
+    for (int i = 1; i < size; i++) {
+        if (stoi(csv[i][sort_index]) > max)
+            max = stoi(csv[i][sort_index]);
+    }
+    return max;
 }
 
-int getMax(vector<int>& arr, int size) { // returns max given an arr and a size 
-   int max = arr[1];
-   for(int i = 2; i<=size; i++) {
-      if(arr[i] > max)
-         max = arr[i];
-   }
-   return max; 
-}
-
-void countSort(vector<int>& arr, int size) { // executes counting sort 
+void countSort(vector<vector<string>>& csv, int sort_index, int size) { // executes counting sort 
 
    // initialize output and count arrays
-   vector<int> output(size + 1);
-   int max = getMax(arr, size);
-   vector<int> count(max + 1);
-   
-   // set initial values in count
-   for(int i = 0; i<=max; i++)
-      count[i] = 0;     
+    vector<vector<string>> output(size);
+    int max = getMax(csv, sort_index, size);
+    vector<int> count(max + 1);
 
-   // get frequencies of every val and update count 
-   for(int i = 1; i <=size; i++)
-      count[arr[i]]++;     
+    // set initial values in count
+    for (int i = 0; i <= max; i++)
+        count[i] = 0;
 
-   // start summing up count values
-   for(int i = 1; i<=max; i++)
-      count[i] += count[i-1];     
 
-   // now, copy over summed values to output vector 
-   for(int i = size; i>=1; i--) {
-      output[count[arr[i]]] = arr[i];
-      count[arr[i]] -= 1; 
-   }
+    // get frequencies of every val and update count 
+    for (int i = 0; i < size; i++)
+        count[stoi(csv[i][sort_index])]++;
 
-   // copy over to main arr 
-   for(int i = 1; i<=size; i++) {
-      arr[i] = output[i]; 
-   }
+
+    // start summing up count values
+    for (int i = 1; i <= max; i++)
+        count[i] += count[i - 1];
+
+
+
+    // now, copy over summed values to output vector 
+    for (int i = size - 1; i >= 0; i--) {
+        output[count[stoi(csv[i][sort_index])] - 1] = csv[i];
+        count[stoi(csv[i][sort_index])] -= 1;
+    }
+
+    // copy over to main arr 
+    for (int i = 0; i < size; i++) {
+        csv[i] = output[i];
+    }
+
+}
+
+void print(vector<vector<string>> csv) {
+
+    string line;
+    for (int j = 0; j < csv[0].size(); j++) {
+        line = line +  csv[0][j] + " | ";
+    }
+    cout << "Columns: " << endl;
+    cout << line.substr(0, line.size() - 3) << endl;
+
+    cout << "\nFirst 5 lines: \n" << endl;
+    for (int i = 1; i < 6; i++)
+    {
+        string line;
+        for (int j = 0; j < csv[i].size(); j++)
+        {
+            line = line + csv[i][j] + " | ";
+        }
+        cout << line.substr(0, line.size() - 3) << endl;
+    }
+
+
+    cout << "\nLast 5 lines: \n" << endl;
+    for (int i = csv.size() - 5; i < csv.size(); i++)
+    {
+        string line;
+        for (int j = 0; j < csv[i].size(); j++)
+        {
+            line = line + csv[i][j] + " | ";
+        }
+        cout << line.substr(0, line.size() - 3) << endl;
+    }
+
+    cout << endl;
+
 }
