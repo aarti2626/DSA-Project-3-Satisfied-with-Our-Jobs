@@ -5,7 +5,7 @@
 #include <chrono>
 #include <fstream>
 #include <sstream>
-#include <iostream>
+#include <locale>
 using namespace std;
 using namespace std::chrono;
 
@@ -17,18 +17,24 @@ void mergeSort(vector<vector<string>>& csv, int sort_index, int l, int r);
 int getMax(vector<vector<string>>& csv, int sort_index, int size);
 void countSort(vector<vector<string>>& csv, int sort_index, int size);
 void print(vector<vector<string>> csv);
+void findCompany(vector<vector<string>> csv, string company);
 
 int main() {
 
-    cout << "Reading File... 100,000 lines could take a little bit of time :)" << endl;
+    //read in data from csv
+    cout << "\nReading File... 100,000 lines could take a little bit of time :)" << endl;
     vector<vector<string>> csv = readCSV("out.csv");
 
     bool running = true;
+
+    //repeat prompt until user wants to end
     while (running) {
+
+        //choose which attribute to sort by
         int n = 0;
         while (n < 1 || n > 8) {
-            // these numbers will be the index that gets sorted in the 2D array, make sure these line up
-            cout << "Please select what you would like to sort by: " << endl;
+            // these numbers will be the index that gets sorted in the 2D array
+            cout << "\nPlease select what you would like to sort by: " << endl;
             cout << "[1]: Overall Rating" << endl <<
                 "[2]: Work Life Balance" << endl <<
                 "[3]: Culture Values" << endl <<
@@ -41,6 +47,7 @@ int main() {
             cin >> n;
         }
 
+        //end program if user wants to end
         if (n == 8)
             break;
 
@@ -50,38 +57,48 @@ int main() {
 
         cout << "\n\n";
 
-        cout << "\nBefore Sorting by " << columns[n - 3] << "(Column #" << n + 1 << "): \n" << endl;
-
+        //print 2d vector before sorting
+        cout << "\nBefore Sorting by " << columns[n - 3] << "(Column #" << n + 1 << "): " << endl;
         print(csv);
 
-        // print(arr, n); here, call print() on the correct column, maybe don't print all the values, just the first few and the last
-
+        //choose which sorting algorithm to use
         int sort = 0;
         while (sort < 1 || sort > 3) {
-            cout << "How would you like to sort? Enter 1 or 2: " << endl;
+            cout << "\nHow would you like to sort? Enter 1 or 2: " << endl;
             cout << "[1]: Merge Sort" << endl << "[2]: Counting Sort" << endl << "[3]: Let's Compare Both" << endl;
             cin >> sort;
         }
         
-        cout << "\n\n\n\n\n\n\n\n";
-        execute(n, sort, csv); // TODO: update this function so that the 2D vector is passed in 
+        cout << "\n\n\n\n\n\n";
+        execute(n, sort, csv); 
         
-        cout << "\nAfter Sorting by " << columns[n - 3] << " (Column #" << n + 1 << "):" << endl;
+        //print sorted 2d vector
+        cout << "\nAfter Sorting by " << columns[n - 3] << " (Column #" << n + 1 << "): " << endl;
         print(csv);
+
+        //choose which company to subset reviews for, repeat until user wants to go back
+        while (running) {
+            cout << "\nChoose company or BACK: ";
+            string company;
+            cin >> company;
+            if (company == "BACK" || company == "back")
+                break;
+            subsetCompany(csv, company);
+        }
+
         
     }
     return 0;
 }
 
 vector<vector<string>> readCSV(string filepath) {
-
+    //read csv data into vector
     vector<vector<string>> csv;
     vector<string> row;
     string line, cell;
 
     fstream file(filepath, ios::in);
-    if (file.is_open())
-    {
+    if (file.is_open()) {
         while (getline(file, line))
         {
             row.clear();
@@ -106,10 +123,10 @@ vector<vector<string>> readCSV(string filepath) {
     }
 
     return csv;
-
 }
 
 string AddCommas(int time) {
+    //add commas to long numbers
     stringstream ss;
     ss.imbue(locale(""));
     ss << fixed << time;
@@ -117,8 +134,7 @@ string AddCommas(int time) {
 }
 
 void execute(int n, int sort, vector<vector<string>> &csv) {
-
-    if (sort == 1) {
+    if (sort == 1) {    //mergesort
 
         vector<vector<string>> mergesort_csv = csv;
 
@@ -138,24 +154,25 @@ void execute(int n, int sort, vector<vector<string>> &csv) {
 
         // report total time taken for sort
         auto duration = duration_cast<nanoseconds>(stop - start);
-        cout << "\n Merge Sort completed in: " << AddCommas(duration.count()) << " nanoseconds" << endl;
+        cout << "Merge Sort completed in: " << AddCommas(duration.count()) << " nanoseconds" << endl;
 
+        //insert columns titles at beginning of sorted vector
         mergesort_csv.insert(mergesort_csv.begin(), csv[0]);
         csv = mergesort_csv;
 
-    } else if (sort == 2) {
-        auto start2 = steady_clock::now();
+    } else if (sort == 2) {     //counting sort
 
         vector<vector<string>> countsort_csv = csv;
 
         // remove line defining column titles
         countsort_csv.erase(countsort_csv.begin());
 
-        cout << "Performing Count Sort..." << endl;
+        cout << "Performing Counting Sort..." << endl;
 
         // timer start
-        auto start = steady_clock::now();
+        auto start2 = steady_clock::now();
 
+        //execute counting sort
         countSort(countsort_csv, n, countsort_csv.size());
 
         // timer stop
@@ -163,17 +180,17 @@ void execute(int n, int sort, vector<vector<string>> &csv) {
         
         // report total time taken for sort
         auto duration2 = duration_cast<nanoseconds>(stop2 - start2);
-        cout << "Count Sort completed in: " << AddCommas(duration2.count()) << " nanoseconds" << endl;
+        cout << "Counting Sort completed in: " << AddCommas(duration2.count()) << " nanoseconds" << endl;
 
+        //insert column titles at beginning of sorted vector
         countsort_csv.insert(countsort_csv.begin(), csv[0]);
         csv = countsort_csv;
-    }
-    else if (sort == 3) {
 
-        // Merge sort
+    } else if (sort == 3) {     //perform both merge sort and counting sort
+
         vector<vector<string>> mergesort_csv = csv;
 
-        // remove line defining column titles
+        //remove line defining column titles
         mergesort_csv.erase(mergesort_csv.begin());
 
         cout << "Performing Merge Sort..." << endl;
@@ -184,19 +201,18 @@ void execute(int n, int sort, vector<vector<string>> &csv) {
 
         auto stop3 = steady_clock::now();
 
-        // report total time taken for sort
+        //report total time taken for sort
         auto durationMerge = duration_cast<nanoseconds>(stop3 - start3);
         cout << "Merge Sort completed in: " << AddCommas(durationMerge.count()) << " nanoseconds" << endl;
 
         cout << endl;
 
-        //Count Sort
         vector<vector<string>> countsort_csv = csv;
 
-        // remove line defining column titles
+        //remove line defining column titles
         countsort_csv.erase(countsort_csv.begin());
 
-        cout << "Performing Count Sort..." << endl;
+        cout << "Performing Counting Sort..." << endl;
 
         auto start4 = steady_clock::now();
 
@@ -204,9 +220,9 @@ void execute(int n, int sort, vector<vector<string>> &csv) {
         
         auto stop4 = steady_clock::now();
 
-        // report total time taken for sort
+        //report total time taken for sort
         auto durationCount = duration_cast<nanoseconds>(stop4 - start4);
-        cout << "Count Sort completed in: " << AddCommas(durationCount.count()) << " nanoseconds" << endl;
+        cout << "Counting Sort completed in: " << AddCommas(durationCount.count()) << " nanoseconds" << endl;
 
         countsort_csv.insert(countsort_csv.begin(), csv[0]);
         csv = countsort_csv;
@@ -266,10 +282,8 @@ void mergeSort(vector<vector<string>> &csv, int sort_index, int l, int r) {
     //recursively divides array into two subarrays, sorts and merges them
     if (l >= r) {
         return;
-    }
-    else {
+    } else {
         //find midpoint
-
         int m = l + (r - l) / 2;
 
         //sort each subarray
@@ -301,17 +315,13 @@ void countSort(vector<vector<string>>& csv, int sort_index, int size) { // execu
     for (int i = 0; i <= max; i++)
         count[i] = 0;
 
-
     // get frequencies of every val and update count 
     for (int i = 0; i < size; i++)
         count[stoi(csv[i][sort_index])]++;
 
-
     // start summing up count values
     for (int i = 1; i <= max; i++)
         count[i] += count[i - 1];
-
-
 
     // now, copy over summed values to output vector 
     for (int i = size - 1; i >= 0; i--) {
@@ -327,17 +337,16 @@ void countSort(vector<vector<string>>& csv, int sort_index, int size) { // execu
 }
 
 void print(vector<vector<string>> csv) {
-
+    //print column names and first and last 10 reviews in vector
     string line;
     for (int j = 0; j < csv[0].size(); j++) {
         line = line +  csv[0][j] + " | ";
     }
-    cout << "Columns: " << endl;
+    cout << "\nColumns: " << endl;
     cout << line.substr(0, line.size() - 3) << endl;
 
-    cout << "\nFirst 5 lines: \n" << endl;
-    for (int i = 1; i < 5; i++)
-    {
+    cout << "\nFirst 10 lines: \n" << endl;
+    for (int i = 1; i < 11; i++) {
         string line;
         for (int j = 0; j < csv[i].size(); j++)
         {
@@ -346,9 +355,8 @@ void print(vector<vector<string>> csv) {
         cout << line.substr(0, line.size() - 3) << endl;
     }
 
-
-    cout << "\nLast 5 lines: \n" << endl;
-    for (int i = csv.size() - 5; i < csv.size(); i++) {
+    cout << "\nLast 10 lines: \n" << endl;
+    for (int i = csv.size() - 10; i < csv.size(); i++) {
         string line;
         for (int j = 0; j < csv[i].size(); j++)
         {
@@ -359,4 +367,23 @@ void print(vector<vector<string>> csv) {
 
     cout << endl;
 
+}
+
+void subsetCompany(vector<vector<string>> csv, string company) {
+    //subset vector to only contain reviews for specified company
+    vector<vector<string>> companyData;
+    companyData.push_back(csv[0]);
+    for (int i = 1; i < csv.size(); i++) {
+        string line;
+        if (csv[i][0] == company) {
+            companyData.push_back(csv[i]);
+        }
+    }
+
+    //if vector has no reviews, print no data for company
+    if (companyData.size() == 1) {
+        cout << "\nNo data on company" << endl;
+    } else {
+        print(companyData);
+    }
 }
