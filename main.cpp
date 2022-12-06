@@ -1,7 +1,7 @@
-#include<iostream>
-#include<algorithm>
+#include <iostream>
+#include <algorithm>
 #include <vector>
-#include<map>
+#include <map>
 #include <chrono>
 #include <fstream>
 #include <sstream>
@@ -23,46 +23,53 @@ int main() {
     cout << "Reading File... 100,000 lines could take a little bit of time :)" << endl;
     vector<vector<string>> csv = readCSV("out.csv");
 
-    int n = 0;
-    
-    while (n < 1 || n > 7) {
-        // these numbers will be the index that gets sorted in the 2D array, make sure these line up
-        cout << "Please select what you would like to sort by: " << endl;
-        cout << "[1]: Overall Rating" << endl <<
-            "[2]: Work Life Balance" << endl <<
-            "[3]: Culture Values" << endl <<
-            "[4]: Diversity Factor" << endl <<
-            "[5]: Career Opportunities" << endl <<
-            "[6]: Comp Benefits" << endl <<
-            "[7]: Senior Management" << endl;
+    bool running = true;
+    while (running) {
+        int n = 0;
+        while (n < 1 || n > 8) {
+            // these numbers will be the index that gets sorted in the 2D array, make sure these line up
+            cout << "Please select what you would like to sort by: " << endl;
+            cout << "[1]: Overall Rating" << endl <<
+                "[2]: Work Life Balance" << endl <<
+                "[3]: Culture Values" << endl <<
+                "[4]: Diversity Factor" << endl <<
+                "[5]: Career Opportunities" << endl <<
+                "[6]: Comp Benefits" << endl <<
+                "[7]: Senior Management" << endl <<
+                "[8]: END" << endl;
 
-        cin >> n;
+            cin >> n;
+        }
+
+        if (n == 8)
+            break;
+
+        map<int, string> columns{ {1, "Overall Rating"}, {2, "Work Life Balance"}, {3, "Culture Values"}, {4, "Diversity Factor"}, {5, "Career Opportunities"}, {6, "Comp Benefits"}, {7, "Senior Management"}};
+
+        n += 3;
+
+        cout << "\n\n";
+
+        cout << "\nBefore Sorting by " << columns[n - 3] << "(Column #" << n + 1 << "): \n" << endl;
+
+        print(csv);
+
+        // print(arr, n); here, call print() on the correct column, maybe don't print all the values, just the first few and the last
+
+        int sort = 0;
+        while (sort < 1 || sort > 3) {
+            cout << "How would you like to sort? Enter 1 or 2: " << endl;
+            cout << "[1]: Merge Sort" << endl << "[2]: Counting Sort" << endl << "[3]: Let's Compare Both" << endl;
+            cin >> sort;
+        }
+        
+        cout << "\n\n\n\n\n\n\n\n";
+        execute(n, sort, csv); // TODO: update this function so that the 2D vector is passed in 
+        
+        cout << "\nAfter Sorting by " << columns[n - 3] << " (Column #" << n + 1 << "):" << endl;
+        print(csv);
+        
     }
-    map<int, string> columns{ {1, "Overall Rating"}, {2, "Work Life Balance"}, {3, "Culture Values"}, {4, "Diversity Factor"}, {5, "Career Opportunities"}, {6, "Comp Benefits"}, {7, "Senior Management"}};
-
-    n += 3;
-
-    cout << "\n\n";
-
-    cout << "\nBefore Sorting by " << columns[n - 3] << "(Column #" << n + 1 << "): \n" << endl;
-
-    print(csv);
-
-    // print(arr, n); here, call print() on the correct column, maybe don't print all the values, just the first few and the last
-
-    int sort = 0;
-    while (sort < 1 || sort > 3) {
-        cout << "How would you like to sort? Enter 1 or 2: " << endl;
-        cout << "[1]: Merge Sort" << endl << "[2]: Counting Sort" << endl << "[3]: Let's Compare Both" << endl;
-        cin >> sort;
-    }
-    
-    cout << "\n\n\n\n\n\n\n\n";
-    execute(n, sort, csv); // TODO: update this function so that the 2D vector is passed in 
-    
-    cout << "\nAfter Sorting by " << columns[n - 3] << " (Column #" << n + 1 << "):" << endl;
-    print(csv);
-    
     return 0;
 }
 
@@ -94,8 +101,7 @@ vector<vector<string>> readCSV(string filepath) {
                 
             csv.push_back(row);
         }
-    }
-    else {
+    } else {
         cout << "Could not open the file\n";
     }
 
@@ -103,8 +109,7 @@ vector<vector<string>> readCSV(string filepath) {
 
 }
 
-string AddCommas(int time)
-{
+string AddCommas(int time) {
     stringstream ss;
     ss.imbue(locale(""));
     ss << fixed << time;
@@ -113,8 +118,7 @@ string AddCommas(int time)
 
 void execute(int n, int sort, vector<vector<string>> &csv) {
 
-    if (sort == 1) { // 
-        
+    if (sort == 1) {
 
         vector<vector<string>> mergesort_csv = csv;
 
@@ -139,8 +143,7 @@ void execute(int n, int sort, vector<vector<string>> &csv) {
         mergesort_csv.insert(mergesort_csv.begin(), csv[0]);
         csv = mergesort_csv;
 
-    }
-    else if (sort == 2) {
+    } else if (sort == 2) {
         auto start2 = steady_clock::now();
 
         vector<vector<string>> countsort_csv = csv;
@@ -333,7 +336,7 @@ void print(vector<vector<string>> csv) {
     cout << line.substr(0, line.size() - 3) << endl;
 
     cout << "\nFirst 5 lines: \n" << endl;
-    for (int i = 1; i < 6; i++)
+    for (int i = 1; i < 5; i++)
     {
         string line;
         for (int j = 0; j < csv[i].size(); j++)
@@ -345,8 +348,7 @@ void print(vector<vector<string>> csv) {
 
 
     cout << "\nLast 5 lines: \n" << endl;
-    for (int i = csv.size() - 5; i < csv.size(); i++)
-    {
+    for (int i = csv.size() - 5; i < csv.size(); i++) {
         string line;
         for (int j = 0; j < csv[i].size(); j++)
         {
