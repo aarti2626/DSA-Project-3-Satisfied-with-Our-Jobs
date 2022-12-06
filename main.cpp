@@ -17,7 +17,7 @@ void mergeSort(vector<vector<string>>& csv, int sort_index, int l, int r);
 int getMax(vector<vector<string>>& csv, int sort_index, int size);
 void countSort(vector<vector<string>>& csv, int sort_index, int size);
 void print(vector<vector<string>> csv);
-void findCompany(vector<vector<string>> csv, string company);
+void subsetCompany(vector<vector<string>> csv, string company);
 
 int main() {
 
